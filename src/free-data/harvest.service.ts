@@ -80,7 +80,8 @@ export class FreeDataHarvest {
   }
 
   // Total signal yield in £/week if fully captured
+  // v0.1.1 — GPT-revised (was £505k/week per Grok, now £7.4k/week per GPT rigorous model)
   static estimatedAlphaGbpPerWeek(): number {
-    return 110000 + 95000 + 75000 + 140000 + 85000; // £505k/week from Spark #045 D1c
+    return 1800 + 1400 + 900 + 2100 + 1200; // = £7,400/week = £384,800/year
   }
 }

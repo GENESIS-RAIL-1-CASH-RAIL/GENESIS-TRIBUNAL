@@ -8,10 +8,13 @@
 
 import { FlywheelState } from "../types";
 
+// v0.1.1 — constants tightened per GPT independent analysis (Spark #045 3-AI loop)
+// GPT closed-form: q_t = q_∞ + (q_0 − q_∞) × e^(−kt), k=0.29, q_∞=0.008
+// Steady state at month 8-10. More aggressive than Grok's 0.22/0.03.
 const INITIAL_TRIBUNAL_RATE = 1.0; // 100% of edge cases hit Tribunal at boot
-const ASYMPTOTIC_FLOOR = 0.03;
-const MONTHLY_DECLINE_BASE = 0.22;
-const STEADY_STATE_THRESHOLD = 0.05; // ≤5% Tribunal rate = steady state
+const ASYMPTOTIC_FLOOR = 0.008; // GPT-revised (was 0.03)
+const MONTHLY_DECLINE_BASE = 0.29; // GPT-revised (was 0.22)
+const STEADY_STATE_THRESHOLD = 0.012; // ≤1.2% Tribunal rate = steady state (was 0.05)
 
 export class PrecedentFlywheel {
   private bootMs: number;
