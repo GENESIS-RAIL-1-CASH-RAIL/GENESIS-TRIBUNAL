@@ -278,6 +278,45 @@ app.post("/tribunal/sign", (req, res) => {
   res.json({ ok: true, signature: signQuery(payload) });
 });
 
+// MIL → TRIBUNAL autopsy intake (added 2026-04-09 per Wargame Wire mission)
+// MIL fires this fire-and-forget when SEE rejects a WargameClaim or surfaces an anomalous pattern.
+// TRIBUNAL persists the autopsy packet locally for review by the next vote cycle.
+const autopsyDispatches: Array<{
+  receivedAt: number;
+  source: string;
+  claimId: string | null;
+  weaponId: string | null;
+  rejectionReason: string | null;
+  seeGates: unknown;
+  evidenceHash: string | null;
+  payload: unknown;
+}> = [];
+const MAX_AUTOPSY_DISPATCHES = 256;
+
+app.post("/tribunal/autopsy/intake", (req, res) => {
+  const packet = (req.body || {}) as Record<string, unknown>;
+  const dispatch = {
+    receivedAt: Date.now(),
+    source: (packet.source as string) || "unknown",
+    claimId: (packet.claimId as string) || null,
+    weaponId: (packet.weaponId as string) || null,
+    rejectionReason: (packet.rejectionReason as string) || (packet.reason as string) || null,
+    seeGates: packet.seeGates ?? null,
+    evidenceHash: (packet.evidenceHash as string) || null,
+    payload: packet,
+  };
+  autopsyDispatches.push(dispatch);
+  if (autopsyDispatches.length > MAX_AUTOPSY_DISPATCHES) {
+    autopsyDispatches.shift();
+  }
+  console.log(`[tribunal] autopsy intake: source=${dispatch.source} weapon=${dispatch.weaponId} reason=${dispatch.rejectionReason}`);
+  res.status(202).json({ accepted: true, autopsyId: `AUT-${Date.now()}`, queueDepth: autopsyDispatches.length });
+});
+
+app.get("/tribunal/autopsy/dispatches", (_req, res) => {
+  res.json({ dispatches: autopsyDispatches.slice(-50), totalReceived: autopsyDispatches.length });
+});
+
 app.listen(PORT, () => {
   console.log(`[tribunal] GENESIS-TRIBUNAL v0.1 listening on :${PORT}`);
   console.log(`[tribunal] dead-man: ${DEADMAN_HOST}:${DEADMAN_PORT}`);
